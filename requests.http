@@ -1,0 +1,16 @@
+POST http://localhost:7071/api/DropCollection HTTP/1.1
+content-type: application/json
+
+{
+    "containerId": "cartitem"
+}
+
+###
+
+POST http://localhost:7071/api/CreateCollection HTTP/1.1
+content-type: application/json
+
+{
+    "containerId": "cartitem",
+    "partitionKeyPath": "/CartId"
+}
