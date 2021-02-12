@@ -18,12 +18,13 @@ namespace Meo
         {
 
             string connStr = Environment.GetEnvironmentVariable("CosmosConnectionString");
+            string preferredRegion = Environment.GetEnvironmentVariable("PreferredLocation");
 
             using (CosmosClient cosmosClient = new CosmosClient(
                 connStr,
                 new CosmosClientOptions()
                 {
-                    ApplicationRegion = Environment.GetEnvironmentVariable("PreferredLocation")
+                    ApplicationRegion = preferredRegion
                 }))
             {
                 Database db = cosmosClient.GetDatabase("contoso");
@@ -49,6 +50,7 @@ namespace Meo
                         Order o = new Order()
                         {
                             id = orderId,
+                            InsertRegion = preferredRegion,
                             Email = (string)jOrder["Email"],
                             OrderDate = orderDate.Substring(0, 10),
                             OrderDateHour = orderDate.Substring(0, 13),
@@ -65,6 +67,7 @@ namespace Meo
                             OrderDetails od = new OrderDetails()
                             {
                                 id = $"{o.id}-{productId}",
+                                InsertRegion = preferredRegion,
                                 Email = o.Email,
                                 OrderDate = o.OrderDate,
                                 OrderDateHour = o.OrderDateHour,

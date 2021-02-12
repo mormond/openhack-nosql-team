@@ -3,6 +3,7 @@ namespace Meo
     public class Order
     {
         public string id { get; set; }
+        public string InsertRegion { get; set; }
         public string Email { get; set; }
         public string PostalCode { get; set; }
         public string OrderDateTime { get; set; }
