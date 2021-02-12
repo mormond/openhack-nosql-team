@@ -10,14 +10,6 @@ namespace Meo
 {
     public static class ProcessOrdersAggregateEvent
     {
-        private class Order
-        {
-            public string id { get; set; }
-            public int Count { get; set; }
-            public decimal Total { get; set; }
-
-        }
-
         [FunctionName("ProcessOrdersAggregateEvent")]
         public static async void Run([CosmosDBTrigger(
             databaseName: "contoso",
@@ -52,15 +44,15 @@ namespace Meo
                     log.LogInformation("Running query: {0}\n", sqlQueryText);
 
                     QueryDefinition queryDefinition = new QueryDefinition(sqlQueryText);
-                    FeedIterator<Order> queryResultSetIterator = container.GetItemQueryIterator<Order>(queryDefinition);
+                    FeedIterator<OrderEvent> queryResultSetIterator = container.GetItemQueryIterator<OrderEvent>(queryDefinition);
 
-                    List<Order> orders = new List<Order>();
+                    List<OrderEvent> orders = new List<OrderEvent>();
 
                     while (queryResultSetIterator.HasMoreResults)
                     {
                         log.LogInformation("In loop");
-                        FeedResponse<Order> currentResultSet = await queryResultSetIterator.ReadNextAsync();
-                        foreach (Order order in currentResultSet)
+                        FeedResponse<OrderEvent> currentResultSet = await queryResultSetIterator.ReadNextAsync();
+                        foreach (OrderEvent order in currentResultSet)
                         {
                             orders.Add(order);
                             log.LogInformation("\tRead {0}\n", order);
@@ -69,14 +61,14 @@ namespace Meo
 
                     log.LogInformation("Orders Count: " + orders.Count);
 
-                    Order currentOrder = new Order() { id = dq.Key, Count = dq.Count(), Total = dq.Sum(x => x.GetPropertyValue<decimal>("Total")) };
+                    OrderEvent currentOrder = new OrderEvent() { id = dq.Key, Count = dq.Count(), Total = dq.Sum(x => x.GetPropertyValue<decimal>("Total")) };
 
                     if (orders.Count == 0)
                     {
                         log.LogInformation("Addin entry");
                         try
                         {
-                            ItemResponse<Order> orderResponse = await container.CreateItemAsync<Order>(currentOrder);
+                            ItemResponse<OrderEvent> orderResponse = await container.CreateItemAsync<OrderEvent>(currentOrder);
                         }
                         catch (Exception ex)
                         {
@@ -85,12 +77,12 @@ namespace Meo
                     }
                     else
                     {
-                        ItemResponse<Order> orderResponse = await container.ReadItemAsync<Order>(dq.Key, new PartitionKey(dq.Key));
+                        ItemResponse<OrderEvent> orderResponse = await container.ReadItemAsync<OrderEvent>(dq.Key, new PartitionKey(dq.Key));
                         int currentCount = orderResponse.Resource.Count;
                         decimal currentTotal = orderResponse.Resource.Total;
 
-                        Order newOrder = new Order() { id = dq.Key, Count = currentCount + currentOrder.Count, Total = currentTotal + currentOrder.Total };
-                        orderResponse = await container.ReplaceItemAsync<Order>(newOrder, newOrder.id);
+                        OrderEvent newOrder = new OrderEvent() { id = dq.Key, Count = currentCount + currentOrder.Count, Total = currentTotal + currentOrder.Total };
+                        orderResponse = await container.ReplaceItemAsync<OrderEvent>(newOrder, newOrder.id);
 
                     }
                 }
